@@ -44,14 +44,27 @@ function getVersionNumber() {
 	return pkg.version;
 }
 
+let _fetchedGitCommit = false;
 let _gitCommit: string | null = null;
 
 function getGitCommit() {
-	if (_gitCommit) {
+	if (_fetchedGitCommit) {
 		return _gitCommit;
 	}
 
-	if (!fs.existsSync(path.resolve(__dirname, "..", ".git"))) {
+	_fetchedGitCommit = true;
+
+	let rootPath = __dirname;
+
+	// Typescript build will be in dist/ folder,
+	// but it will not be when running `dev`.
+	if (rootPath.endsWith(path.join("dist", "server"))) {
+		rootPath = path.basename(rootPath);
+	}
+
+	// Check that .git folder exists (or a file in case of a worktree) in the expected place,
+	// to avoid git command mistakenly recursing outside of our root folder
+	if (!fs.existsSync(path.resolve(rootPath, "..", ".git"))) {
 		_gitCommit = null;
 		return null;
 	}
